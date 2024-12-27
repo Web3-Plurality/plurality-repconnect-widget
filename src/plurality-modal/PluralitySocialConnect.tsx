@@ -6,6 +6,7 @@ import PluralityModal from './PluralityModal';
 import PluralityApi from './PluralityApi'
 import ProfileConnectedButton from './components/ConnectedProfile';
 import ProfileButton from './components/profileButton';
+import { User } from './types';
 
 
 const baseUrl = process.env.REACT_APP_WIDGET_BASE_URL
@@ -23,12 +24,6 @@ interface PluralitySocialConnectProps {
         flipTextColor: string;
         width: string;
     };
-}
-
-interface User {
-    username: string;
-    profileIcon: string;
-    rating: number;
 }
 
 interface PluralitySocialConnectState {
@@ -67,7 +62,9 @@ class PluralitySocialConnect extends Component<PluralitySocialConnectProps, Plur
             userData: {
                 username: '',
                 profileIcon: '',
-                rating: 0
+                ratings: 0,
+                scores: [],
+                consent: false
             }
         };
     }
@@ -234,7 +231,9 @@ class PluralitySocialConnect extends Component<PluralitySocialConnectProps, Plur
                     ...prevState.userData,
                     username: data.name,
                     profileIcon: data.avatar,
-                    rating: data.rating
+                    ratings: data.rating,
+                    consent: data.consent,
+                    ...(data.scores && { scores: data.scores })
                 }
             }));
         } else if (eventName === "consentData") {
@@ -255,9 +254,7 @@ class PluralitySocialConnect extends Component<PluralitySocialConnectProps, Plur
                     this.state.isMetamaskConnected || this.state.isLitConnected
                         ? <ProfileConnectedButton
                             theme={this.props.options.theme}
-                            icon={this.state.userData.profileIcon}
-                            name={this.state.userData.username}
-                            ratings={this.state.userData.rating}
+                            userData={this.state.userData}
                             handleClick={this.openSocialConnectPopup}
                         />
                         : <ProfileButton handleClick={this.openSocialConnectPopup} />
