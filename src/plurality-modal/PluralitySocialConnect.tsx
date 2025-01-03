@@ -40,8 +40,11 @@ const shouldDisableButton: boolean = false;
 
 class PluralitySocialConnect extends Component<PluralitySocialConnectProps, PluralitySocialConnectState> {
 
+    private static instance: PluralitySocialConnect | null = null;
+
     constructor(props: PluralitySocialConnectProps) {
         super(props);
+        PluralitySocialConnect.instance = this;
 
         this.state = {
             iframeStyle: {
@@ -73,6 +76,12 @@ class PluralitySocialConnect extends Component<PluralitySocialConnectProps, Plur
         if (!this.props.options.clientId) return baseUrl
         return `${baseUrl}/rsm?client_id=${this.props.options.clientId}`;
     }
+
+    static openSocialConnectPopup = () => {
+        if (this.instance) {
+            this.instance.openSocialConnectPopup();
+        }
+    };
 
     openSocialConnectPopup = () => {
         const targetOrigin = this.getBaseUrl() || '*';
@@ -144,6 +153,9 @@ class PluralitySocialConnect extends Component<PluralitySocialConnectProps, Plur
 
     static getMessageSignaturePromise = (messageToSign: string) => {
         if (!this.checkLitConnection()) return;
+        if (this.instance) {
+            this.instance.openSocialConnectPopup();
+        }
         return PluralityApi.sendRequest("getMessageSignature", messageToSign);
     }
 
@@ -181,7 +193,7 @@ class PluralitySocialConnect extends Component<PluralitySocialConnectProps, Plur
     //     if (!this.checkLitConnection()) return;
     //     return PluralityApi.sendRequest("switchNetwork", rpc, chainId);
     // }
-    
+
     // static fetchNetwork = () => {
     //     if (!this.checkLitConnection()) return;
     //     return PluralityApi.sendRequest("fetchNetwork");
@@ -207,7 +219,6 @@ class PluralitySocialConnect extends Component<PluralitySocialConnectProps, Plur
     handleIframeMessage = (event: MessageEvent) => {
         const baseUrl = this.getBaseUrl(); // Get baseUrl from prop or environment variable
         if (event.origin !== baseUrl) return;
-        console.log("Event data: ", event.data)
         const { eventName, data } = event.data;
         if (eventName === "metamaskConnection") {
             this.setState({ isMetamaskConnected: data.isConnected })
@@ -217,7 +228,6 @@ class PluralitySocialConnect extends Component<PluralitySocialConnectProps, Plur
                 localStorage.setItem('metamask', 'false')
             }
         } else if (eventName === "litConnection") {
-            console.log("Inside")
             this.setState({ isLitConnected: data.isConnected })
             if (data?.isConnected) {
                 localStorage.setItem('lit', 'true')
@@ -236,8 +246,8 @@ class PluralitySocialConnect extends Component<PluralitySocialConnectProps, Plur
                     ...(data.scores && { scores: data.scores })
                 }
             }));
-        } else if (eventName === "consentData") {
-            if (data?.consent) {
+        } else if (eventName === "consentData" || eventName === "getMessageSignature") {
+            if (data?.consent || eventName === "getMessageSignature") {
                 this.closeSocialConnectPopup();
             }
         }
